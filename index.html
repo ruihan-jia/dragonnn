@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Cute Clicky Page 🌈</title>
+
+  <!-- Google font (optional) -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg1: #ff9a9e;
+      --bg2: #fad0c4;
+      --accent1: #6dd3ff;
+      --accent2: #ffd86b;
+      --glass: rgba(255,255,255,0.18);
+      --glass-strong: rgba(255,255,255,0.26);
+      --card-radius: 18px;
+    }
+
+    /* Reset-ish */
+    *{box-sizing: border-box; margin:0; padding:0}
+    html,body,#app{height:100%}
+    body{
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      background: linear-gradient(135deg,var(--bg1), var(--bg2));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+      color:#222;
+    }
+
+    /* container */
+    .card{
+      width:min(980px, 96vw);
+      background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
+      border-radius: var(--card-radius);
+      padding: clamp(18px, 4vw, 36px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+      position:relative;
+      overflow:hidden;
+      backdrop-filter: blur(6px) saturate(120%);
+      border: 1px solid rgba(255,255,255,0.14);
+    }
+
+    header{
+      display:flex;
+      gap:16px;
+      align-items:center;
+      margin-bottom: clamp(12px, 2.4vw, 20px);
+    }
+    .logo{
+      width:56px;
+      height:56px;
+      border-radius:12px;
+      background: linear-gradient(135deg,var(--accent1), var(--accent2));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color: #073b4c;
+      font-weight:700;
+      font-size:20px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.12), inset 0 -6px 18px rgba(255,255,255,0.06);
+    }
+    h1{ font-size: clamp(18px, 3.2vw, 26px); }
+    p.lead{ color: rgba(0,0,0,0.6); margin-top:6px; }
+
+    /* main grid */
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 320px;
+      gap:20px;
+      align-items:stretch;
+    }
+
+    .left{
+      min-height:220px;
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+    }
+
+    .controls{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .btn{
+      background:var(--glass);
+      border: none;
+      padding:10px 14px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:600;
+      transition: transform .14s ease, background .14s;
+      backdrop-filter: blur(3px);
+    }
+    .btn:active{ transform: translateY(2px); }
+    .btn:hover{ background: var(--glass-strong); }
+
+    .play-area{
+      position:relative;
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.02));
+      border-radius:12px;
+      min-height:260px;
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    /* floating moving elements */
+    .bubble{
+      position:absolute;
+      width:72px;
+      height:72px;
+      border-radius:50%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#073b4c;
+      font-weight:700;
+      user-select:none;
+      cursor:pointer;
+      transition: transform .5s cubic-bezier(.2,.9,.3,1), box-shadow .2s;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    }
+    .bubble:active{ transform: scale(.92); box-shadow: 0 6px 12px rgba(0,0,0,0.14); }
+
+    /* sidebar */
+    .sidebar{
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+      border-radius:12px;
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      min-height:180px;
+    }
+    .muted{ color: rgba(0,0,0,0.55); font-size:14px; }
+
+    /* responsive: on small screens stack columns */
+    @media (max-width:880px){
+      .grid{ grid-template-columns: 1fr; }
+      .sidebar{ order:2 }
+      .left{ order:1 }
+    }
+
+    /* small bubble sizes on small screens */
+    @media (max-width:420px){
+      .bubble{ width:56px; height:56px; font-size:14px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card" id="app" role="main" aria-labelledby="title">
+    <header>
+      <div class="logo" aria-hidden="true">💫</div>
+      <div>
+        <h1 id="title">Cute Clicky Page</h1>
+        <p class="lead">Click the bubbles — they scoot around! Responsive & accessible.</p>
+      </div>
+    </header>
+
+    <div class="grid">
+      <div class="left">
+        <div class="controls" aria-hidden="false">
+          <button class="btn" id="addBtn">➕ Add bubble</button>
+          <button class="btn" id="popAllBtn">💥 Pop all</button>
+          <button class="btn" id="shuffleBtn">🔀 Shuffle</button>
+        </div>
+
+        <div class="play-area" id="playArea" aria-label="Play area with interactive bubbles">
+          <!-- bubbles inserted here -->
+        </div>
+      </div>
+
+      <aside class="sidebar" aria-label="Controls and info">
+        <div class="muted">Tip: click a bubble to nudge it. Double-click to remove it.</div>
+        <div class="muted">Try resizing the window — layout adapts.</div>
+        <div style="margin-top:auto; font-size:13px; color:rgba(0,0,0,0.6)">
+          Built with ❤️ — drop into GitHub Pages.
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    // Simple interactive logic
+    const play = document.getElementById('playArea');
+    const addBtn = document.getElementById('addBtn');
+    const popAllBtn = document.getElementById('popAllBtn');
+    const shuffleBtn = document.getElementById('shuffleBtn');
+
+    // utility: random between min and max
+    const rand = (min, max) => Math.random() * (max - min) + min;
+
+    // create a bubble element with random color and position
+    function createBubble(label){
+      const el = document.createElement('button');
+      el.className = 'bubble';
+      el.type = 'button';
+      el.setAttribute('aria-label', label ?? 'cute bubble');
+      const size = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--bubble-size')) || 72;
+
+      // random gradient color
+      const g1 = `hsl(${Math.floor(rand(180, 340))}deg ${Math.floor(rand(60,90))}% ${Math.floor(rand(55,70))}%)`;
+      const g2 = `hsl(${Math.floor(rand(40, 140))}deg ${Math.floor(rand(60,90))}% ${Math.floor(rand(60,80))}%)`;
+      el.style.background = `radial-gradient(circle at 30% 30%, ${g1}, ${g2})`;
+
+      // label
+      el.textContent = (Math.random() > 0.5) ? '✨' : '🌼';
+
+      // initial spot inside play area
+      positionBubbleRandom(el);
+
+      // click nudges bubble to a new nearby pos
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        nudgeBubble(el);
+      });
+
+      // double-click removes bubble
+      el.addEventListener('dblclick', (e) => {
+        e.stopPropagation();
+        popBubble(el);
+      });
+
+      return el;
+    }
+
+    function getPlayRect(){ return play.getBoundingClientRect(); }
+
+    function positionBubbleRandom(el){
+      const rect = getPlayRect();
+      const bw = rect.width;
+      const bh = rect.height;
+      // keep inside with 10px padding
+      const x = rand(10, Math.max(10, bw - 82));
+      const y = rand(10, Math.max(10, bh - 82));
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
+      play.appendChild(el);
+    }
+
+    function nudgeBubble(el){
+      const rect = getPlayRect();
+      // new position near current
+      const curX = parseFloat(el.style.left || 0);
+      const curY = parseFloat(el.style.top || 0);
+      const nx = Math.min(Math.max(8, curX + rand(-100, 100)), rect.width - 72);
+      const ny = Math.min(Math.max(8, curY + rand(-100, 100)), rect.height - 72);
+      el.style.left = nx + 'px';
+      el.style.top = ny + 'px';
+      // small bounce animation
+      el.animate([{ transform: 'scale(1.06)' }, { transform: 'scale(1)' }], { duration: 240, easing: 'cubic-bezier(.2,.9,.3,1)' });
+    }
+
+    function popBubble(el){
+      // fun pop animation then remove
+      el.animate([
+        { transform: 'scale(1)', opacity:1 },
+        { transform: 'scale(0.3) rotate(25deg)', opacity:0 }
+      ], { duration: 260, easing: 'ease-out' })
+      setTimeout(()=> el.remove(), 260);
+    }
+
+    // shuffle positions of existing bubbles
+    function shuffleBubbles(){
+      const rect = getPlayRect();
+      const bubbles = [...play.querySelectorAll('.bubble')];
+      bubbles.forEach((b, i) => {
+        const nx = rand(8, Math.max(8, rect.width - 72));
+        const ny = rand(8, Math.max(8, rect.height - 72));
+        // add slight stagger for nicer motion
+        setTimeout(()=> {
+          b.style.left = nx + 'px';
+          b.style.top = ny + 'px';
+        }, i * 40);
+      });
+    }
+
+    // remove all with pop
+    function popAll(){
+      const bubbles = [...play.querySelectorAll('.bubble')];
+      bubbles.forEach((b, i) => {
+        setTimeout(()=> popBubble(b), i * 50);
+      });
+    }
+
+    // add initial bubbles
+    for(let i=0;i<4;i++){
+      createBubble().classList && positionBubbleRandom(createBubble()); // no-op to ensure function exists
+    }
+
+    // Create three starter bubbles in a friendly layout
+    function seedStarter(){
+      play.innerHTML = '';
+      ['✨','🌼','🍋'].forEach((emoji, idx) => {
+        const b = createBubble('starter ' + (idx+1));
+        b.textContent = emoji;
+        // place roughly spread out
+        const rect = getPlayRect();
+        b.style.left = (20 + idx*(rect.width/3)) + 'px';
+        b.style.top = (rect.height/3 + rand(-20,20)) + 'px';
+        play.appendChild(b);
+      });
+    }
+
+    // ensure play area resizes bubbles if viewport changed
+    function safeReposition(){
+      const rect = getPlayRect();
+      const bubbles = [...play.querySelectorAll('.bubble')];
+      bubbles.forEach(b => {
+        const x = parseFloat(b.style.left || 0);
+        const y = parseFloat(b.style.top || 0);
+        const nx = Math.min(Math.max(8, x), Math.max(8, rect.width - 72));
+        const ny = Math.min(Math.max(8, y), Math.max(8, rect.height - 72));
+        b.style.left = nx + 'px';
+        b.style.top = ny + 'px';
+      });
+    }
+
+    // Wire buttons
+    addBtn.addEventListener('click', () => {
+      const b = createBubble('new bubble');
+      positionBubbleRandom(b);
+    });
+    popAllBtn.addEventListener('click', popAll);
+    shuffleBtn.addEventListener('click', shuffleBubbles);
+
+    // click empty play area to add bubble
+    play.addEventListener('click', (e) => {
+      // only trigger when clicking the play container, not bubbles
+      if(e.target === play) {
+        const b = createBubble('added by click');
+        positionBubbleRandom(b);
+      }
+    });
+
+    // seed and handle resizes
+    window.addEventListener('load', seedStarter);
+    window.addEventListener('resize', () => {
+      // reposition so none fall outside
+      safeReposition();
+    });
+
+    // accessibility: keyboard users can focus bubbles
+    document.addEventListener('keydown', (e) => {
+      if(e.key === 'a') {
+        // quick-add with keyboard
+        const b = createBubble('keyboard bubble');
+        positionBubbleRandom(b);
+        b.focus();
+      }
+    });
+  </script>
+</body>
+</html>
