@@ -1,94 +1,143 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Dragon & Duck Playground</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cute Interactive Page</title>
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: url('background.png') center/cover no-repeat fixed;
+  }
 
-  <style>
-    /* Reset */
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+  .sprite {
+    position: absolute;
+    width: 120px;
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
 
-    body {
-      height: 100vh;
-      width: 100vw;
-      overflow: hidden;
-      background: url("background.png") center/cover no-repeat fixed;
-      font-family: sans-serif;
-      position: relative;
-      user-select: none;
-    }
+  #dragon { left: 20%; top: 20%; }
+  #duck   { left: 60%; top: 40%; }
 
-    /* Movable PNG elements */
-    .sprite {
-      position: absolute;
-      width: 140px;
-      cursor: pointer;
-      transition: transform .45s cubic-bezier(.2,.9,.3,1);
-    }
-
-    .sprite:active {
-      transform: scale(0.9);
-    }
-  </style>
+  .cake {
+    position: absolute;
+    width: 80px;
+    cursor: pointer;
+    transition: top 0.1s linear;
+  }
+</style>
 </head>
+<body>
 
-<body id="play">
+<img src="dragon.png" id="dragon" class="sprite" />
+<img src="duck.png" id="duck" class="sprite" />
 
 <script>
-  const play = document.getElementById("play");
+  // ⭐ Move sprite on click
+  document.querySelectorAll('.sprite').forEach(sprite => {
+    sprite.addEventListener('click', (e) => {
+      const x = Math.random() * (window.innerWidth - 150);
+      const y = Math.random() * (window.innerHeight - 150);
+      sprite.style.left = x + 'px';
+      sprite.style.top = y + 'px';
+    });
+  });
 
-  /* Random helpers */
-  const rand = (min, max) => Math.random() * (max - min) + min;
+  // ⭐ 50% chance to drop a cake when dragon is clicked
+  const dragon = document.getElementById('dragon');
+  let cakeStackHeights = [];  // store x + height positions
 
-  /* Creates either a dragon or a duck */
-  function createSprite(type) {
-    const img = document.createElement("img");
-    img.src = type + ".png";        // dragon.png or duck.png
-    img.className = "sprite";
+  dragon.addEventListener('click', () => {
+    if (Math.random() < 0.5) dropCake();
+  });
 
-    positionRandom(img);
 
-    // Click → move to new random position
-    img.addEventListener("click", (e) => {
-      e.stopPropagation();
-      positionRandom(img);
+  function dropCake() {
+    const cake = document.createElement('img');
+    cake.src = 'cake.png';
+    cake.className = 'cake';
+
+    cake.dataset.clicks = "0"; // tracks how many times it was "eaten"
+
+    const minX = window.innerWidth * 0.1;
+    const maxX = window.innerWidth * 0.9;
+    const xPos = Math.random() * (maxX - minX) + minX;
+
+    cake.style.left = xPos + 'px';
+    cake.style.top = '-100px';
+    cake.style.height = "80px";
+
+    document.body.appendChild(cake);
+    cake.addEventListener('click', () => {
+      let clicks = parseInt(cake.dataset.clicks);
+      clicks++;
+      cake.dataset.clicks = clicks;
+
+      // Each cake is visually divided into 3 horizontal sections
+      // We hide the top N sections using inset clipping
+      if (clicks === 1) {
+        // hide top 1/3
+        cake.style.clipPath = "inset(33% 0 0 0)";
+      } 
+      else if (clicks === 2) {
+        // hide top 2/3
+        cake.style.clipPath = "inset(66% 0 0 0)";
+      } 
+      else {
+        // fully eaten
+        removeCakeFromStack(cake);
+        cake.remove();
+      }
     });
 
-    // Double-click → remove
-    img.addEventListener("dblclick", (e) => {
-      e.stopPropagation();
-      img.remove();
-    });
-
-    play.appendChild(img);
+    animateFall(cake, xPos);
   }
 
-  /* Randomly place inside viewport */
-  function positionRandom(el) {
-    const w = window.innerWidth;
-    const h = window.innerHeight;
+  function animateFall(cake, xPos) {
+    const bottomLimit = window.innerHeight * 0.66; // bottom 1/3 of screen start
+    const cakeHeight = 80;
 
-    el.style.left = rand(0, w - 150) + "px";
-    el.style.top  = rand(0, h - 150) + "px";
+    // Determine stack position at this x
+    let existingStack = cakeStackHeights
+      .filter(c => Math.abs(c.x - xPos) < 60)
+      .sort((a, b) => b.top - a.top);
+
+    let targetY;
+
+    if (existingStack.length === 0) {
+      // No stack yet
+      targetY = window.innerHeight - cakeHeight - 10;
+    } else {
+      // Stack on top of last cake in the pile
+      targetY = existingStack[0].top - cakeHeight;
+    }
+
+    // Ensure it's within bottom 1/3 minimum
+    if (targetY < bottomLimit) {
+      targetY = bottomLimit;
+    }
+
+    // Animate falling
+    const fall = setInterval(() => {
+      const currentTop = parseInt(cake.style.top);
+      if (currentTop >= targetY) {
+        clearInterval(fall);
+        cake.style.top = targetY + 'px';
+
+        // Save in stack
+        cakeStackHeights.push({ el: cake, x: xPos, top: targetY });
+
+        return;
+      }
+      cake.style.top = currentTop + 10 + 'px';
+    }, 16);
   }
 
-  /* Clicking empty background adds new random sprite */
-  play.addEventListener("click", () => {
-    const type = Math.random() < 0.5 ? "dragon" : "duck";
-    createSprite(type);
-  });
-
-  /* Start with one dragon + one duck */
-  window.addEventListener("load", () => {
-    createSprite("dragon");
-    createSprite("duck");
-  });
-
-  /* Keep sprites visible on window resize */
-  window.addEventListener("resize", () => {
-    document.querySelectorAll(".sprite").forEach(positionRandom);
-  });
+  function removeCakeFromStack(cake) {
+    cakeStackHeights = cakeStackHeights.filter(c => c.el !== cake);
+  }
 </script>
 
 </body>
